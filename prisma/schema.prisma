@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STAFF
+  BUYER
+}
+
+enum VehicleStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  BIDDING_ACTIVE
+  BIDDING_ENDED
+  SOLD
+  AVAILABLE
+}
+
+enum AuctionStatus {
+  INACTIVE
+  ACTIVE
+  ENDED
+}
+
+enum BidStatus {
+  CURRENT_HIGH_BID
+  OUTBID
+  WON
+}
+
+model User {
+  id                        String                @id @default(uuid()) @db.Uuid
+  name                      String
+  email                     String                @unique
+  password                  String
+  passwordResetOtpHash      String?
+  passwordResetOtpExpiresAt DateTime?
+  role                      Role                  @default(BUYER)
+  isAdmin                   Boolean               @default(false)
+  isActive                  Boolean               @default(true)
+  phoneNumber               String?
+  lastModifiedBy            String?
+  lastModifiedAt            DateTime?
+  createdAt                 DateTime              @default(now())
+  uploads                   Upload[]
+  bids                      Bid[]
+  dealerships               Dealership[]
+  auctionRegistrations      AuctionRegistration[]
+  wonVehicles               Vehicle[]             @relation("WinningBuyer")
+  highestBidVehicles        Vehicle[]             @relation("HighestBidBuyer")
+}
+
+model Dealership {
+  id            String                @id @default(uuid()) @db.Uuid
+  name          String
+  address       String
+  isDefault     Boolean               @default(false)
+  createdAt     DateTime              @default(now())
+  buyers           User[]
+  registrations    AuctionRegistration[]
+  bids             Bid[]
+  wonVehicles          Vehicle[]             @relation("WinningDealership")
+  highestBidVehicles   Vehicle[]             @relation("HighestBidDealer")
+}
+
+model AuctionRegistration {
+  id           String     @id @default(uuid()) @db.Uuid
+  buyer        User       @relation(fields: [buyerId], references: [id])
+  buyerId      String     @db.Uuid
+  vehicle      Vehicle    @relation(fields: [vehicleId], references: [id])
+  vehicleId    String     @db.Uuid
+  dealership   Dealership @relation(fields: [dealershipId], references: [id])
+  dealershipId String     @db.Uuid
+  hasBid       Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([buyerId, vehicleId])
+}
+
+model Upload {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  type      String
+  size      Int
+  order     Int
+  data      Bytes
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @db.Uuid
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+  vehicleId String?  @db.Uuid
+}
+
+model Contact {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  phoneNo   String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Vehicle {
+  id                     String                @id @default(uuid()) @db.Uuid
+  vehicleName            String
+  sellerName             String
+  sellerPhoneNo          String
+  sellerEmail            String
+  vin                    String                @unique
+  year                   Int
+  make                   String
+  model                  String
+  mileage                Int
+  location               String
+  condition              String
+  minimumAcceptablePrice Float
+  status                 VehicleStatus         @default(PENDING)
+  auctionStatus          AuctionStatus         @default(INACTIVE)
+  bids                   Float                 @default(0)
+  highestBid             Float                 @default(0)
+  bidCount               Int                   @default(0)
+  auctionStartTime       DateTime?
+  auctionEndTime         DateTime?
+  winningBidderName      String?
+  winningBidAmount       Float?
+  winningDealership      Dealership? @relation("WinningDealership", fields: [winningDealershipId], references: [id])
+  winningDealershipId    String?     @db.Uuid
+  winningBuyer           User?       @relation("WinningBuyer", fields: [winningBuyerId], references: [id])
+  winningBuyerId         String?     @db.Uuid
+  highestBidDealer       Dealership? @relation("HighestBidDealer", fields: [highestBidDealerId], references: [id])
+  highestBidDealerId     String?     @db.Uuid
+  highestBidBuyer        User?       @relation("HighestBidBuyer", fields: [highestBidBuyerId], references: [id])
+  highestBidBuyerId      String?     @db.Uuid
+  tireCondition          String?
+  mechanicalCondition    String?
+  interiorCondition      String?
+  exteriorCondition      String?
+  lastUpdatedBy          String?
+  bidIncrementNo         Int                   @default(100)
+  trim                   String?
+  exteriorColor          String?
+  interiorColor          String?
+  smokerVehicle          Boolean?
+  reserveMet             Boolean?
+  engine                 String?
+  leatherOrCloth         String?
+  roof                   String?
+  drivetrain             String?
+  transmission           String?
+  accidentHistory        String?
+  additionalDisclosures  String?
+  kbbTradeInValue        Float?
+  kbbPrivatePartyValue   Float?
+  mmrValue               Float?
+  carMaxOffer            Float?
+  carvanaOffer           Float?
+  acvWholesaleEstimate   Float?
+  finalTransactionPrice  Float?
+  reasonNotSold          String?
+  adminValuationNotes    String?
+  valuationUpdatedAt     DateTime?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  uploads                Upload[]
+  bidsRelation           Bid[]
+  auctionRegistrations   AuctionRegistration[]
+}
+
+model Bid {
+  id           String     @id @default(uuid()) @db.Uuid
+  amount       Float
+  status       BidStatus  @default(CURRENT_HIGH_BID)
+  createdAt    DateTime   @default(now())
+  vehicle      Vehicle    @relation(fields: [vehicleId], references: [id])
+  vehicleId    String     @db.Uuid
+  buyer        User       @relation(fields: [buyerId], references: [id])
+  buyerId      String     @db.Uuid
+  dealership   Dealership @relation(fields: [dealershipId], references: [id])
+  dealershipId String     @db.Uuid
+}
