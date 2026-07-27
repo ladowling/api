@@ -15,6 +15,8 @@ async function bootstrap() {
       'http://localhost:5174',
       'http://127.0.0.1:5174',
       'https://lane-16.netlify.app',
+      'https://lane16.com',
+      'https://www.lane16.com',
     ],
     credentials: true,
   });

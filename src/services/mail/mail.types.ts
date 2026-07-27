@@ -395,6 +395,20 @@ export class InvoiceCreatedMailInput {
   clientComment?: string | null;
 }
 
+export class ContactFormNotificationInput {
+  @IsString()
+  name: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  phoneNo: string;
+
+  @IsString()
+  message: string;
+}
+
 export class OutbidNotificationInput {
   @IsString()
   buyerName: string;

@@ -4,6 +4,7 @@ import { company } from '../company.constants';
 import {
   AuctionEndedStaffNotificationInput,
   AuctionWonNotificationInput,
+  ContactFormNotificationInput,
   OutbidNotificationInput,
   VehicleApprovedNotificationInput,
   BuyerWelcomeMailInput,
@@ -116,6 +117,15 @@ export class MailService {
       to: dto.recipientEmail,
       subject: 'Lane 16 Invoice has been created',
       template: 'invoice-created',
+      context: this.withBranding(dto),
+    });
+  }
+
+  async sendContactFormNotification(dto: ContactFormNotificationInput) {
+    await this.mailer.sendMail({
+      to: 'support@lane16.com',
+      subject: `New Contact Message from ${dto.name}`,
+      template: 'contact-form',
       context: this.withBranding(dto),
     });
   }

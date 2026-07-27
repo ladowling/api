@@ -1,14 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import {
-  ArrayMinSize,
-  IsArray,
-  IsEmail,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
-import { CreateBuyerDealershipDto } from './create-buyer.dto';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class UpdateBuyerDto {
   @ApiPropertyOptional({ example: 'John Doe' })
@@ -25,15 +16,4 @@ export class UpdateBuyerDto {
   @IsOptional()
   @IsString()
   phoneNumber?: string;
-
-  @ApiPropertyOptional({
-    type: [CreateBuyerDealershipDto],
-    description: "Replaces the buyer's dealership associations entirely, if provided.",
-  })
-  @IsOptional()
-  @IsArray()
-  @ArrayMinSize(1)
-  @ValidateNested({ each: true })
-  @Type(() => CreateBuyerDealershipDto)
-  dealerships?: CreateBuyerDealershipDto[];
 }

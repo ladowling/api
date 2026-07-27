@@ -81,11 +81,11 @@ export class BuyersController {
   }
 
   @Get(':id')
-  @Auth([Role.STAFF])
+  @Auth([Role.STAFF, Role.BUYER])
   @ApiOperation({ summary: 'Fetch a single buyer' })
   @ApiOkResponse({ description: 'Returns the buyer account.' })
   @ApiNotFoundResponse({ description: 'Buyer not found.' })
-  @ApiUnauthorizedResponse({ description: 'Staff privileges required.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication required.' })
   async findOne(@IdParam() id: string) {
     return this.buyersService.findOne(id);
   }

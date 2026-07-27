@@ -8,8 +8,9 @@ import { SellersModule } from './modules/sellers/sellers.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { BuyersModule } from './modules/buyers/buyers.module';
+import { DealershipsModule } from './modules/dealerships/dealerships.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), PrismaModule, MailModule, AuthModule, UploadModule, SellersModule, ContactModule, AdminModule, BuyersModule],
+  imports: [ScheduleModule.forRoot(), PrismaModule, MailModule, AuthModule, UploadModule, SellersModule, ContactModule, AdminModule, BuyersModule, DealershipsModule],
 })
 export class AppModule {}

@@ -10,7 +10,7 @@ import { bad } from 'src/utils/error.utils';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { MailService } from 'src/services/mail/mail.service';
 import { CreateBidDto } from './dto/create-bid.dto';
-import { CreateBuyerDealershipDto, CreateBuyerDto } from './dto/create-buyer.dto';
+import { CreateBuyerDto } from './dto/create-buyer.dto';
 import { UpdateBuyerDto } from './dto/update-buyer.dto';
 import { AssignDealershipsDto } from './dto/assign-dealerships.dto';
 import { RegisterForAuctionDto } from './dto/register-auction.dto';
@@ -42,7 +42,7 @@ const buyerSelect = {
   lastModifiedBy: true,
   lastModifiedAt: true,
   createdAt: true,
-  dealerships: { select: { id: true, name: true, address: true, isDefault: true } },
+  dealerships: { select: { id: true, name: true, address: true } },
 } as const;
 
 @Injectable()
@@ -54,21 +54,6 @@ export class BuyersService {
     private readonly mail: MailService,
   ) {}
 
-  private async resolveDealerships(dealerships: CreateBuyerDealershipDto[], markFirstAsDefault = false) {
-    return Promise.all(
-      dealerships.map(async (d, index) => {
-        const existing = await this.prisma.dealership.findFirst({
-          where: { name: d.name },
-        });
-        if (existing) return { id: existing.id };
-        const created = await this.prisma.dealership.create({
-          data: { name: d.name, address: d.address, isDefault: markFirstAsDefault && index === 0 },
-        });
-        return { id: created.id };
-      }),
-    );
-  }
-
   async createBuyer(dto: CreateBuyerDto, createdBy: string) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -76,7 +61,6 @@ export class BuyersService {
     if (existing) bad('A user with this email already exists');
 
     const tempPassword = generateTempPassword();
-    const dealershipConnections = await this.resolveDealerships(dto.dealerships, true);
 
     const buyer = await this.prisma.user.create({
       data: {
@@ -88,7 +72,6 @@ export class BuyersService {
         isAdmin: false,
         lastModifiedBy: createdBy,
         lastModifiedAt: new Date(),
-        dealerships: { connect: dealershipConnections },
       },
       select: buyerSelect,
     });
@@ -140,23 +123,15 @@ export class BuyersService {
       if (existing) bad('A user with this email already exists');
     }
 
-    const { dealerships, ...rest } = dto;
-    const dealershipConnections = dealerships
-      ? await this.resolveDealerships(dealerships)
-      : undefined;
-
     const tempPassword = generateTempPassword();
 
     const updated = await this.prisma.user.update({
       where: { id },
       data: {
-        ...rest,
+        ...dto,
         password: await hash(tempPassword),
         lastModifiedBy: updatedBy,
         lastModifiedAt: new Date(),
-        ...(dealershipConnections && {
-          dealerships: { set: dealershipConnections },
-        }),
       },
       select: buyerSelect,
     });
@@ -206,7 +181,7 @@ export class BuyersService {
 
   async registerForAuction(vehicleId: string, dto: RegisterForAuctionDto, buyerId: string) {
     const [buyer, vehicle] = await Promise.all([
-      this.prisma.user.findFirst({ where: { id: buyerId, role: Role.BUYER }, include: { dealerships: { select: { id: true, isDefault: true } } } }),
+      this.prisma.user.findFirst({ where: { id: buyerId, role: Role.BUYER }, include: { dealerships: { select: { id: true } } } }),
       this.prisma.vehicle.findUnique({ where: { id: vehicleId } }),
     ]);
 
@@ -216,27 +191,25 @@ export class BuyersService {
       throw new BadRequestException('You can only register for vehicles that are approved or currently in auction');
     }
 
+    if (!dto.dealershipId && !dto.newDealership) {
+      throw new BadRequestException('You must provide a dealershipId or newDealership to register for an auction');
+    }
+
     let dealershipId: string;
 
     if (dto.dealershipId) {
       const owned = buyer.dealerships.some((d) => d.id === dto.dealershipId);
       if (!owned) throw new BadRequestException('This dealership is not associated with your account');
       dealershipId = dto.dealershipId;
-    } else if (dto.newDealership) {
+    } else {
       const created = await this.prisma.dealership.create({
         data: {
-          name: dto.newDealership.name,
-          address: dto.newDealership.address,
+          name: dto.newDealership!.name,
+          address: dto.newDealership!.address,
           buyers: { connect: { id: buyerId } },
         },
       });
       dealershipId = created.id;
-    } else {
-      const defaultDealership = buyer.dealerships.find((d) => d.isDefault);
-      if (!defaultDealership) {
-        throw new BadRequestException('No default dealership found on your account — please provide a dealershipId or newDealership');
-      }
-      dealershipId = defaultDealership.id;
     }
 
     return this.prisma.auctionRegistration.upsert({
@@ -278,22 +251,13 @@ export class BuyersService {
       );
     }
 
-    let activeRegistration = registration;
-    if (!activeRegistration) {
-      const buyerWithDealerships = await this.prisma.user.findUnique({
-        where: { id: buyerId },
-        include: { dealerships: { select: { id: true, isDefault: true } } },
-      });
-      const defaultDealership = buyerWithDealerships?.dealerships.find((d) => d.isDefault);
-      if (!defaultDealership) {
-        throw new BadRequestException(
-          'You have no default dealership. Please register for this auction first.',
-        );
-      }
-      activeRegistration = await this.prisma.auctionRegistration.create({
-        data: { buyerId, vehicleId: dto.vehicleId, dealershipId: defaultDealership.id },
-      });
+    if (!registration) {
+      throw new BadRequestException(
+        'You must register for this auction before placing a bid',
+      );
     }
+
+    const activeRegistration = registration;
 
     if (dto.amount <= vehicle.highestBid) {
       throw new BadRequestException(
