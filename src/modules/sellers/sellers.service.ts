@@ -72,6 +72,14 @@ export class SellersService {
     });
   }
 
+  async findArchivedVehicles() {
+    return this.prisma.vehicle.findMany({
+      where: { status: VehicleStatus.ARCHIVED },
+      orderBy: { createdAt: 'desc' },
+      include: vehicleInclude,
+    });
+  }
+
   async findOneVehicle(id: string) {
     const vehicle = await this.prisma.vehicle.findUnique({
       where: { id },
@@ -184,6 +192,22 @@ export class SellersService {
     return this.prisma.vehicle.update({
       where: { id },
       data,
+      include: vehicleInclude,
+    });
+  }
+
+  async archiveVehicle(id: string) {
+    const vehicle = await this.prisma.vehicle.findUnique({ where: { id } });
+    if (!vehicle) throw new NotFoundException('Vehicle listing not found');
+    if (vehicle.status === VehicleStatus.BIDDING_ACTIVE) {
+      throw new BadRequestException('Cannot archive a vehicle while bidding is active');
+    }
+    if (vehicle.status === VehicleStatus.ARCHIVED) {
+      throw new BadRequestException('Vehicle is already archived');
+    }
+    return this.prisma.vehicle.update({
+      where: { id },
+      data: { status: VehicleStatus.ARCHIVED },
       include: vehicleInclude,
     });
   }

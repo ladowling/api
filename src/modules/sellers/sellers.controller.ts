@@ -50,6 +50,16 @@ export class SellersController {
     return this.sellersService.findAllVehicles();
   }
 
+  @Get('vehicles/archived')
+  @Auth([Role.STAFF])
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Fetch all archived vehicle listings', description: 'Staff only.' })
+  @ApiOkResponse({ description: 'Returns all archived vehicle listings.' })
+  @ApiUnauthorizedResponse({ description: 'Staff privileges required.' })
+  async findArchivedVehicles() {
+    return this.sellersService.findArchivedVehicles();
+  }
+
   @Get('vehicles/:id')
   @Auth([Role.STAFF, Role.BUYER])
   @ApiBearerAuth()
@@ -108,6 +118,21 @@ export class SellersController {
   @ApiUnauthorizedResponse({ description: 'Staff privileges required.' })
   async resolveVehicle(@IdParam() id: string, @Body() dto: ResolveVehicleDto) {
     return this.sellersService.resolveVehicle(id, dto);
+  }
+
+  @Patch('vehicles/:id/archive')
+  @Auth([Role.STAFF])
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Archive a vehicle listing',
+    description: 'Staff only. Archives the vehicle — cannot be done while bidding is active.',
+  })
+  @ApiOkResponse({ description: 'Vehicle archived.' })
+  @ApiNotFoundResponse({ description: 'Vehicle listing not found.' })
+  @ApiBadRequestResponse({ description: 'Cannot archive while bidding is active or already archived.' })
+  @ApiUnauthorizedResponse({ description: 'Staff privileges required.' })
+  async archiveVehicle(@IdParam() id: string) {
+    return this.sellersService.archiveVehicle(id);
   }
 
   @Patch('vehicles/:id/valuation')

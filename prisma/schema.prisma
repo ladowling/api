@@ -19,6 +19,7 @@ enum VehicleStatus {
   BIDDING_ENDED
   SOLD
   AVAILABLE
+  ARCHIVED
 }
 
 enum AuctionStatus {
