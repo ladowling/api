@@ -202,12 +202,11 @@ export class SellersService {
     if (vehicle.status === VehicleStatus.BIDDING_ACTIVE) {
       throw new BadRequestException('Cannot archive a vehicle while bidding is active');
     }
-    if (vehicle.status === VehicleStatus.ARCHIVED) {
-      throw new BadRequestException('Vehicle is already archived');
-    }
+
+    const isArchived = vehicle.status === VehicleStatus.ARCHIVED;
     return this.prisma.vehicle.update({
       where: { id },
-      data: { status: VehicleStatus.ARCHIVED },
+      data: { status: isArchived ? VehicleStatus.PENDING : VehicleStatus.ARCHIVED },
       include: vehicleInclude,
     });
   }

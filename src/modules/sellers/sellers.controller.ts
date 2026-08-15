@@ -124,12 +124,12 @@ export class SellersController {
   @Auth([Role.STAFF])
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Archive a vehicle listing',
-    description: 'Staff only. Archives the vehicle — cannot be done while bidding is active.',
+    summary: 'Toggle archive on a vehicle listing',
+    description: 'Staff only. Archives the vehicle if active, or restores it to PENDING if already archived. Cannot be toggled while bidding is active.',
   })
-  @ApiOkResponse({ description: 'Vehicle archived.' })
+  @ApiOkResponse({ description: 'Vehicle archive status toggled.' })
   @ApiNotFoundResponse({ description: 'Vehicle listing not found.' })
-  @ApiBadRequestResponse({ description: 'Cannot archive while bidding is active or already archived.' })
+  @ApiBadRequestResponse({ description: 'Cannot archive while bidding is active.' })
   @ApiUnauthorizedResponse({ description: 'Staff privileges required.' })
   async archiveVehicle(@IdParam() id: string) {
     return this.sellersService.archiveVehicle(id);
