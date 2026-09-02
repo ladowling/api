@@ -34,6 +34,11 @@ enum BidStatus {
   WON
 }
 
+enum TitleStatus {
+  IN_HAND
+  LIEN
+}
+
 model User {
   id                        String                @id @default(uuid()) @db.Uuid
   name                      String
@@ -155,6 +160,7 @@ model Vehicle {
   transmission           String?
   accidentHistory        String?
   additionalDisclosures  String?
+  titleStatus            TitleStatus?
   kbbTradeInValue        Float?
   kbbPrivatePartyValue   Float?
   mmrValue               Float?

@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { AuctionStatus, VehicleStatus } from '@prisma/client';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { MailService } from 'src/services/mail/mail.service';
+import { company } from 'src/services/company.constants';
 
 @Injectable()
 export class AuctionSchedulerService {
@@ -70,6 +71,11 @@ export class AuctionSchedulerService {
             });
 
             if (winningBid) {
+              const staffRecipients = [
+                { name: 'Lane 16 Admin', email: company.email },
+                ...staff.filter((s) => s.email !== company.email),
+              ];
+
               await Promise.allSettled([
                 this.mail.sendAuctionWonNotification({
                   buyerName: winningBid.buyer.name,
@@ -81,7 +87,7 @@ export class AuctionSchedulerService {
                   winningBidAmount: winningBid.amount.toFixed(2),
                   dealershipName: winningBid.dealership.name,
                 }),
-                ...staff.map((s) =>
+                ...staffRecipients.map((s) =>
                   this.mail.sendAuctionEndedStaffNotification({
                     staffName: s.name,
                     email: s.email,

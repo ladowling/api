@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AuctionStatus, VehicleStatus } from '@prisma/client';
+import { AuctionStatus, TitleStatus, VehicleStatus } from '@prisma/client';
 import {
   IsArray,
   IsBoolean,
@@ -199,6 +199,15 @@ export class CreateVehicleDto {
   @IsOptional()
   @IsString()
   additionalDisclosures?: string;
+
+  @ApiPropertyOptional({
+    enum: TitleStatus,
+    example: TitleStatus.IN_HAND,
+    description: 'Title status of the vehicle: IN_HAND or LIEN',
+  })
+  @IsOptional()
+  @IsEnum(TitleStatus)
+  titleStatus?: TitleStatus;
 
   @ApiPropertyOptional({
     type: [String],
