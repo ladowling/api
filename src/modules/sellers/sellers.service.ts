@@ -12,6 +12,7 @@ import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { ResolveVehicleDto } from './dto/resolve-vehicle.dto';
 import { UpdateBidIncrementDto } from './dto/update-bid-increment.dto';
 import { UpdateVehicleValuationDto } from './dto/update-vehicle-valuation.dto';
+import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 
 const uploadSelect = { select: { id: true, name: true } } as const;
 
@@ -87,6 +88,22 @@ export class SellersService {
     });
     if (!vehicle) throw new NotFoundException('Vehicle listing not found');
     return vehicle;
+  }
+
+  async updateVehicle(id: string, dto: UpdateVehicleDto, updatedBy: string) {
+    const vehicle = await this.prisma.vehicle.findUnique({ where: { id } });
+    if (!vehicle) throw new NotFoundException('Vehicle listing not found');
+
+    const { uploads, ...rest } = dto;
+    return this.prisma.vehicle.update({
+      where: { id },
+      data: {
+        ...rest,
+        lastUpdatedBy: updatedBy,
+        ...(uploads?.length && { uploads: { set: uploads.map((id) => ({ id })) } }),
+      },
+      include: vehicleInclude,
+    });
   }
 
   async approveVehicle(id: string, dto: ApproveVehicleDto) {

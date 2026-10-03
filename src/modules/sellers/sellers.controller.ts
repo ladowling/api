@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
+import { IAuthUser } from '../auth/auth.types';
+import { AuthUser } from '../auth/decorators/auth.decorator';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -18,6 +20,7 @@ import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { ResolveVehicleDto } from './dto/resolve-vehicle.dto';
 import { UpdateBidIncrementDto } from './dto/update-bid-increment.dto';
 import { UpdateVehicleValuationDto } from './dto/update-vehicle-valuation.dto';
+import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { SellersService } from './sellers.service';
 
 @ApiTags('sellers')
@@ -69,6 +72,25 @@ export class SellersController {
   @ApiUnauthorizedResponse({ description: 'Staff or buyer privileges required.' })
   async findOneVehicle(@IdParam() id: string) {
     return this.sellersService.findOneVehicle(id);
+  }
+
+  @Patch('vehicles/:id')
+  @Auth([Role.STAFF])
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Edit a vehicle listing',
+    description: 'Staff only. Update any vehicle field. All fields are optional.',
+  })
+  @ApiBody({ type: UpdateVehicleDto })
+  @ApiOkResponse({ description: 'Vehicle updated.' })
+  @ApiNotFoundResponse({ description: 'Vehicle listing not found.' })
+  @ApiUnauthorizedResponse({ description: 'Staff privileges required.' })
+  async updateVehicle(
+    @IdParam() id: string,
+    @Body() dto: UpdateVehicleDto,
+    @AuthUser() user: IAuthUser,
+  ) {
+    return this.sellersService.updateVehicle(id, dto, user.name);
   }
 
   @Patch('vehicles/:id/approve')
