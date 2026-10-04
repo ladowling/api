@@ -28,13 +28,18 @@ export class VehicleApprovedNotificationInput {
   year: number;
 
   @IsString()
-  location: string;
-
-  @IsString()
   auctionStartTime: string;
 
   @IsString()
   auctionEndTime: string;
+
+  @IsOptional()
+  @IsString()
+  trim?: string | null;
+
+  @IsOptional()
+  @IsInt()
+  mileage?: number | null;
 }
 
 export class BuyerWelcomeMailInput {

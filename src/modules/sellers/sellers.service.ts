@@ -14,6 +14,18 @@ import { UpdateBidIncrementDto } from './dto/update-bid-increment.dto';
 import { UpdateVehicleValuationDto } from './dto/update-vehicle-valuation.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 
+function formatEst(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date) + ' ET';
+}
+
 const uploadSelect = { select: { id: true, name: true } } as const;
 
 const vehicleInclude = {
@@ -149,7 +161,8 @@ export class SellersService {
     make: string;
     model: string;
     year: number;
-    location: string;
+    trim: string | null;
+    mileage: number;
     auctionStartTime: Date | null;
     auctionEndTime: Date | null;
   }) {
@@ -168,9 +181,10 @@ export class SellersService {
           make: vehicle.make,
           model: vehicle.model,
           year: vehicle.year,
-          location: vehicle.location,
-          auctionStartTime: vehicle.auctionStartTime?.toISOString() ?? 'TBD',
-          auctionEndTime: vehicle.auctionEndTime?.toISOString() ?? 'TBD',
+          trim: vehicle.trim,
+          mileage: vehicle.mileage,
+          auctionStartTime: vehicle.auctionStartTime ? formatEst(vehicle.auctionStartTime) : 'TBD',
+          auctionEndTime: vehicle.auctionEndTime ? formatEst(vehicle.auctionEndTime) : 'TBD',
         }),
       ),
     );
