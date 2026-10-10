@@ -7,6 +7,7 @@ import {
 import { AuctionStatus, VehicleStatus } from '@prisma/client';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { MailService } from 'src/services/mail/mail.service';
+import { company } from 'src/services/company.constants';
 import { ApproveVehicleDto } from './dto/approve-vehicle.dto';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { ResolveVehicleDto } from './dto/resolve-vehicle.dto';
@@ -62,7 +63,7 @@ export class SellersService {
   async createVehicle(dto: CreateVehicleDto) {
     const { uploads, auctionEndTime, ...rest } = dto;
 
-    return this.prisma.vehicle.create({
+    const vehicle = await this.prisma.vehicle.create({
       data: {
         ...rest,
         ...(auctionEndTime && { auctionEndTime: new Date(auctionEndTime) }),
@@ -76,6 +77,57 @@ export class SellersService {
         },
       },
     });
+
+    this.notifyAdminsOfNewVehicle(vehicle).catch((err) =>
+      this.logger.error('Failed to send new vehicle admin notification', err),
+    );
+
+    return vehicle;
+  }
+
+  private async notifyAdminsOfNewVehicle(vehicle: {
+    vehicleName: string;
+    make: string;
+    model: string;
+    year: number;
+    trim: string | null;
+    vin: string;
+    mileage: number;
+    location: string;
+    minimumAcceptablePrice: number;
+    sellerName: string;
+    sellerEmail: string;
+    sellerPhoneNo: string;
+  }) {
+    const admins = await this.prisma.user.findMany({
+      where: { isAdmin: true, isActive: true },
+      select: { name: true, email: true },
+    });
+    const recipients = [
+      { name: 'Lane 16 Admin', email: company.email },
+      ...admins.filter((a) => a.email !== company.email),
+    ];
+
+    await Promise.allSettled(
+      recipients.map((admin) =>
+        this.mail.sendNewVehicleAdminNotification({
+          adminName: admin.name,
+          email: admin.email,
+          vehicleName: vehicle.vehicleName,
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          trim: vehicle.trim,
+          vin: vehicle.vin,
+          mileage: vehicle.mileage,
+          location: vehicle.location,
+          minimumAcceptablePrice: vehicle.minimumAcceptablePrice.toFixed(2),
+          sellerName: vehicle.sellerName,
+          sellerEmail: vehicle.sellerEmail,
+          sellerPhoneNo: vehicle.sellerPhoneNo,
+        }),
+      ),
+    );
   }
 
   async findAllVehicles() {

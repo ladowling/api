@@ -1,0 +1,91 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>New Vehicle Submitted</title>
+  </head>
+  <body style='margin:0;padding:0;background-color:#f4f7fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937;'>
+    <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background-color:#f4f7fb;padding:32px 16px'>
+      <tr>
+        <td align='center'>
+          <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='max-width:640px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,0.08);'>
+            <tr>
+              <td style='background-color:#ffffff;padding:28px 40px 24px;'>
+                <table role='presentation' width='100%' cellpadding='0' cellspacing='0'>
+                  <tr>
+                    <td align='center' style='padding-bottom:20px'>
+                      <img src='https://www.lane16.com/assets/lane-pic-DM1Pnp5C.png' alt='Lane 16' style='display:block;width:180px;max-width:100%;height:auto;margin:0 auto' />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style='text-align:right'>
+                      <p style='margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#7f8b96;'>Staff Notification</p>
+                      <h1 style='margin:0;font-size:28px;line-height:1.3;color:#1f2937;'>Hello, {{adminName}}</h1>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style='padding:0 40px'>
+                <div style='height:4px;background-color:#2E7D32'></div>
+              </td>
+            </tr>
+
+            <tr>
+              <td style='padding:32px 40px'>
+                <p style='margin:0 0 16px;font-size:16px;line-height:1.7;'>
+                  A new vehicle has been submitted and is awaiting review. Its listing status is <strong>PENDING</strong>.
+                </p>
+
+                <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='margin:24px 0;border:1px solid #e5e7eb;border-radius:12px;background-color:#f8fafc;'>
+                  <tr>
+                    <td style='padding:24px'>
+                      <p style='margin:0 0 14px;font-size:13px;font-weight:bold;color:#475569;text-transform:uppercase;letter-spacing:0.04em;'>Vehicle</p>
+                      <p style='margin:0 0 10px;font-size:15px'><strong>{{vehicleName}}</strong></p>
+                      <p style='margin:0 0 10px;font-size:15px'>{{year}} {{make}} {{model}}{{#if trim}} {{trim}}{{/if}}</p>
+                      <p style='margin:0 0 10px;font-size:15px'><strong>VIN:</strong> {{vin}}</p>
+                      <p style='margin:0 0 10px;font-size:15px'><strong>Mileage:</strong> {{mileage}}</p>
+                      <p style='margin:0 0 10px;font-size:15px'><strong>Location:</strong> {{location}}</p>
+                      <p style='margin:0;font-size:15px'><strong>Minimum Acceptable Price:</strong> <span style='color:#2E7D32;font-weight:700;'>${{minimumAcceptablePrice}}</span></p>
+                    </td>
+                  </tr>
+                </table>
+
+                <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='margin:0 0 24px;border:1px solid #e5e7eb;border-radius:12px;background-color:#f8fafc;'>
+                  <tr>
+                    <td style='padding:24px'>
+                      <p style='margin:0 0 14px;font-size:13px;font-weight:bold;color:#475569;text-transform:uppercase;letter-spacing:0.04em;'>Seller</p>
+                      <p style='margin:0 0 10px;font-size:15px'><strong>Name:</strong> {{sellerName}}</p>
+                      <p style='margin:0 0 10px;font-size:15px'><strong>Email:</strong> {{sellerEmail}}</p>
+                      <p style='margin:0;font-size:15px'><strong>Phone:</strong> {{sellerPhoneNo}}</p>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style='margin:0 0 24px;font-size:15px;line-height:1.7;'>
+                  Log in to the portal to review and approve the listing.
+                </p>
+
+                <table role='presentation' cellpadding='0' cellspacing='0'>
+                  <tr>
+                    <td style='border-radius:8px;background-color:#2E7D32;'>
+                      <a href='https://lane16.com' target='_blank' style='display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:8px;'>Go to Portal</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style='padding:20px 40px 32px;font-size:13px;line-height:1.6;color:#64748b;'>
+                This is an automated notification. For assistance, email support@lane16.com.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

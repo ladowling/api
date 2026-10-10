@@ -495,6 +495,51 @@ export class AuctionEndedStaffNotificationInput {
   winningDealershipName: string;
 }
 
+export class NewVehicleAdminNotificationInput {
+  @IsString()
+  adminName: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  vehicleName: string;
+
+  @IsString()
+  make: string;
+
+  @IsString()
+  model: string;
+
+  @IsInt()
+  year: number;
+
+  @IsOptional()
+  @IsString()
+  trim?: string | null;
+
+  @IsString()
+  vin: string;
+
+  @IsInt()
+  mileage: number;
+
+  @IsString()
+  location: string;
+
+  @IsString()
+  minimumAcceptablePrice: string;
+
+  @IsString()
+  sellerName: string;
+
+  @IsString()
+  sellerEmail: string;
+
+  @IsString()
+  sellerPhoneNo: string;
+}
+
 export class PasswordResetOtpMailInput {
   @IsString()
   name: string;

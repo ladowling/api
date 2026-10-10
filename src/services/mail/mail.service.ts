@@ -11,6 +11,7 @@ import {
   InvoiceCreatedMailInput,
   NewClientMailInput,
   NewStaffMailInput,
+  NewVehicleAdminNotificationInput,
   PasswordResetOtpMailInput,
   ProjectAttachmentMailInput,
   ProjectCommentMailInput,
@@ -153,6 +154,15 @@ export class MailService {
       to: dto.email,
       subject: `Auction Ended: ${dto.vehicleName}`,
       template: 'auction-ended-staff',
+      context: this.withBranding(dto),
+    });
+  }
+
+  async sendNewVehicleAdminNotification(dto: NewVehicleAdminNotificationInput) {
+    await this.mailer.sendMail({
+      to: dto.email,
+      subject: `New Vehicle Submitted: ${dto.vehicleName}`,
+      template: 'new-vehicle-admin',
       context: this.withBranding(dto),
     });
   }
