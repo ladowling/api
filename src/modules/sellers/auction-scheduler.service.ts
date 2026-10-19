@@ -37,23 +37,38 @@ export class AuctionSchedulerService {
           status: VehicleStatus.BIDDING_ACTIVE,
           auctionEndTime: { lte: now },
         },
-        select: { id: true, vehicleName: true, make: true, model: true, year: true },
+        select: {
+          id: true,
+          vehicleName: true,
+          make: true,
+          model: true,
+          year: true,
+          highestBid: true,
+          minimumAcceptablePrice: true,
+        },
       });
 
       if (vehiclesToEnd.length > 0) {
         await this.prisma.$transaction(
-          vehiclesToEnd.flatMap(({ id }) => [
-            this.prisma.bid.updateMany({
-              where: { vehicleId: id, status: 'CURRENT_HIGH_BID' },
-              data: { status: 'WON' },
-            }),
-            this.prisma.vehicle.update({
-              where: { id },
-              data: { status: VehicleStatus.BIDDING_ENDED, auctionStatus: AuctionStatus.ENDED },
-            }),
-          ]),
+          vehiclesToEnd.flatMap((vehicle) => {
+            const reserveMet = vehicle.highestBid >= vehicle.minimumAcceptablePrice && vehicle.highestBid > 0;
+            return [
+              this.prisma.bid.updateMany({
+                where: { vehicleId: vehicle.id, status: 'CURRENT_HIGH_BID' },
+                data: { status: reserveMet ? 'WON' : 'OUTBID' },
+              }),
+              this.prisma.vehicle.update({
+                where: { id: vehicle.id },
+                data: {
+                  status: VehicleStatus.BIDDING_ENDED,
+                  auctionStatus: AuctionStatus.ENDED,
+                  reserveMet,
+                },
+              }),
+            ];
+          }),
         );
-        this.logger.log(`Ended ${vehiclesToEnd.length} auction(s) and marked winning bids as WON`);
+        this.logger.log(`Ended ${vehiclesToEnd.length} auction(s)`);
 
         const staff = await this.prisma.user.findMany({
           where: { role: 'STAFF', isActive: true },
@@ -62,30 +77,33 @@ export class AuctionSchedulerService {
 
         await Promise.allSettled(
           vehiclesToEnd.map(async (vehicle) => {
-            const winningBid = await this.prisma.bid.findFirst({
-              where: { vehicleId: vehicle.id, status: 'WON' },
+            const reserveMet = vehicle.highestBid >= vehicle.minimumAcceptablePrice && vehicle.highestBid > 0;
+
+            const topBid = await this.prisma.bid.findFirst({
+              where: { vehicleId: vehicle.id, status: reserveMet ? 'WON' : 'OUTBID' },
+              orderBy: { amount: 'desc' },
               include: {
                 buyer: { select: { name: true, email: true } },
                 dealership: { select: { name: true } },
               },
             });
 
-            if (winningBid) {
-              const staffRecipients = [
-                { name: 'Lane 16 Admin', email: company.email },
-                ...staff.filter((s) => s.email !== company.email),
-              ];
+            const staffRecipients = [
+              { name: 'Lane 16 Admin', email: company.email },
+              ...staff.filter((s) => s.email !== company.email),
+            ];
 
+            if (reserveMet && topBid) {
               await Promise.allSettled([
                 this.mail.sendAuctionWonNotification({
-                  buyerName: winningBid.buyer.name,
-                  email: winningBid.buyer.email,
+                  buyerName: topBid.buyer.name,
+                  email: topBid.buyer.email,
                   vehicleName: vehicle.vehicleName,
                   make: vehicle.make,
                   model: vehicle.model,
                   year: vehicle.year,
-                  winningBidAmount: winningBid.amount.toFixed(2),
-                  dealershipName: winningBid.dealership.name,
+                  winningBidAmount: topBid.amount.toFixed(2),
+                  dealershipName: topBid.dealership.name,
                 }),
                 ...staffRecipients.map((s) =>
                   this.mail.sendAuctionEndedStaffNotification({
@@ -95,12 +113,30 @@ export class AuctionSchedulerService {
                     make: vehicle.make,
                     model: vehicle.model,
                     year: vehicle.year,
-                    winningBidAmount: winningBid.amount.toFixed(2),
-                    winningBuyerName: winningBid.buyer.name,
-                    winningDealershipName: winningBid.dealership.name,
+                    winningBidAmount: topBid.amount.toFixed(2),
+                    winningBuyerName: topBid.buyer.name,
+                    winningDealershipName: topBid.dealership.name,
                   }),
                 ),
               ]);
+            } else {
+              // Reserve not met — notify staff only
+              await Promise.allSettled(
+                staffRecipients.map((s) =>
+                  this.mail.sendAuctionEndedStaffNotification({
+                    staffName: s.name,
+                    email: s.email,
+                    vehicleName: vehicle.vehicleName,
+                    make: vehicle.make,
+                    model: vehicle.model,
+                    year: vehicle.year,
+                    winningBidAmount: topBid ? topBid.amount.toFixed(2) : '0.00',
+                    winningBuyerName: topBid ? topBid.buyer.name : 'N/A',
+                    winningDealershipName: topBid ? topBid.dealership.name : 'N/A',
+                  }),
+                ),
+              );
+              this.logger.log(`Reserve not met for vehicle ${vehicle.vehicleName} — no winner`);
             }
           }),
         );
