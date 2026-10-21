@@ -165,6 +165,7 @@ model Vehicle {
   kbbPrivatePartyValue   Float?
   mmrValue               Float?
   carMaxOffer            Float?
+  carFaxRetailValue      Float?
   carvanaOffer           Float?
   acvWholesaleEstimate   Float?
   finalTransactionPrice  Float?

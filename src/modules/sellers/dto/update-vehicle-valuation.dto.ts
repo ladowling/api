@@ -22,6 +22,11 @@ export class UpdateVehicleValuationDto {
   @IsNumber()
   carMaxOffer?: number;
 
+  @ApiPropertyOptional({ example: 27500.0, description: 'CarFax retail value' })
+  @IsOptional()
+  @IsNumber()
+  carFaxRetailValue?: number;
+
   @ApiPropertyOptional({ example: 24500.0, description: 'Carvana offer amount' })
   @IsOptional()
   @IsNumber()
